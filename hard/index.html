@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FATEH GAMES - Space Shooter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: white;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        .brand {
+            font-size: 2.5rem;
+            color: #ffcc00;
+            font-weight: bold;
+            text-shadow: 0 0 15px #ff6600, 0 0 30px #ff3300;
+            font-style: italic;
+            letter-spacing: 3px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: rgba(0, 0, 50, 0.5);
+            border-bottom: 2px solid #00a8ff;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-size: 0.8rem;
+            color: #a0a0ff;
+        }
+        
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ffea;
+            text-shadow: 0 0 5px #00a8ff;
+        }
+        
+        .controls-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #00a8ff;
+        }
+        
+        .controls-info h3 {
+            color: #00ffea;
+            margin-bottom: 10px;
+        }
+        
+        .control-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .key {
+            background: rgba(0, 50, 100, 0.7);
+            border: 1px solid #00a8ff;
+            border-radius: 5px;
+            padding: 2px 8px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .on-screen-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .action-btn {
+            background: rgba(200, 50, 50, 0.7);
+            border: 2px solid #ff4d4d;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            padding: 10px;
+            pointer-events: auto;
+        }
+        
+        .action-btn:active {
+            background: rgba(220, 70, 70, 0.9);
+            transform: scale(0.95);
+        }
+        
+        .action-btn.missile {
+            background: rgba(200, 150, 50, 0.7);
+            border: 2px solid #ffcc00;
+        }
+        
+        .action-btn.missile:active {
+            background: rgba(220, 170, 70, 0.9);
+        }
+        
+        .mobile-arrows {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: auto;
+        }
+        
+        .arrow-row {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .arrow-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 100, 200, 0.7);
+            border: 2px solid #00a8ff;
+            border-radius: 10px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .arrow-btn:active {
+            background: rgba(0, 150, 255, 0.9);
+            transform: scale(0.9);
+        }
+        
+        .game-over, .level-complete {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 50, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            border: 3px solid #00a8ff;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 168, 255, 0.7);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .game-over h2, .level-complete h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ff4d4d;
+        }
+        
+        .level-complete h2 {
+            color: #4dff4d;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(to bottom, #00a8ff, #0077cc);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+        }
+        
+        .restart-btn:hover {
+            background: linear-gradient(to bottom, #00b8ff, #0088dd);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .next-level-btn {
+            background: linear-gradient(to bottom, #4dff4d, #00cc00);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+        }
+        
+        .next-level-btn:hover {
+            background: linear-gradient(to bottom, #66ff66, #00ee00);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .main-menu-btn {
+            background: linear-gradient(to bottom, #ffcc00, #ff9900);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            pointer-events: auto;
+        }
+        
+        .main-menu-btn:hover {
+            background: linear-gradient(to bottom, #ffdd00, #ffaa00);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ffea;
+            box-shadow: 0 0 5px #00a8ff;
+        }
+        
+        .crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .crosshair::after {
+            width: 20px;
+            height: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* Menu Screens */
+        .splash-screen, .main-menu, .level-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #000011, #000033);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        
+        .main-menu, .level-menu {
+            display: none;
+        }
+        
+        .splash-title {
+            font-size: 4rem;
+            color: #ffcc00;
+            text-shadow: 0 0 20px #ff6600, 0 0 40px #ff3300;
+            margin-bottom: 40px;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        .loading-bar-container {
+            width: 300px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .loading-bar {
+            height: 100%;
+            background: linear-gradient(to right, #00a8ff, #00ffea);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .loading-text {
+            font-size: 1.2rem;
+            color: #00ffea;
+            margin-top: 10px;
+        }
+        
+        .menu-title {
+            font-size: 3.5rem;
+            color: #ffcc00;
+            text-shadow: 0 0 15px #ff6600;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .menu-btn {
+            background: linear-gradient(to bottom, #00a8ff, #0077cc);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            min-width: 200px;
+            text-align: center;
+        }
+        
+        .menu-btn:hover {
+            background: linear-gradient(to bottom, #00b8ff, #0088dd);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            max-width: 500px;
+            margin: 20px 0;
+        }
+        
+        .level-btn {
+            background: linear-gradient(to bottom, #4d4dff, #3333cc);
+            color: white;
+            border: none;
+            width: 80px;
+            height: 80px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .level-btn:hover {
+            background: linear-gradient(to bottom, #6666ff, #4444dd);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .level-btn.completed {
+            background: linear-gradient(to bottom, #4dff4d, #00cc00);
+        }
+        
+        .level-btn.current {
+            background: linear-gradient(to bottom, #ffcc00, #ff9900);
+            border: 2px solid #ffcc00;
+        }
+        
+        .level-btn.locked {
+            background: linear-gradient(to bottom, #666666, #333333);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .level-btn.locked:hover {
+            transform: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .back-btn {
+            background: linear-gradient(to bottom, #ff4d4d, #cc0000);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: linear-gradient(to bottom, #ff6666, #dd0000);
+            transform: translateY(-2px);
+        }
+
+        /* Info Modal */
+        .info-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 50, 0.95);
+            width: 500px;
+            height: 500px;
+            border-radius: 20px;
+            border: 3px solid #00a8ff;
+            box-shadow: 0 0 40px rgba(0, 168, 255, 0.8);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .info-modal h2 {
+            font-size: 2.5rem;
+            color: #ffcc00;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #ff6600;
+        }
+
+        .info-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .info-content p {
+            margin: 10px 0;
+        }
+
+        .info-content .highlight {
+            color: #00ffea;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            background: linear-gradient(to bottom, #ff4d4d, #cc0000);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: linear-gradient(to bottom, #ff6666, #dd0000);
+            transform: translateY(-2px);
+        }
+        
+        /* Show mobile controls on smaller screens */
+        @media (max-width: 768px) {
+            .mobile-arrows {
+                display: flex;
+            }
+            .controls-info {
+                display: none;
+            }
+            .brand {
+                font-size: 1.8rem;
+            }
+            .splash-title, .menu-title {
+                font-size: 2.5rem;
+            }
+            .level-grid {
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 300px;
+            }
+            .info-modal {
+                width: 90%;
+                height: 80%;
+                padding: 20px;
+            }
+            .info-modal h2 {
+                font-size: 2rem;
+            }
+            .info-content {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-title">FATEH GAMES</div>
+        <div class="loading-bar-container">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
+        <div class="loading-text" id="loadingText">Loading...</div>
+    </div>
+
+    <!-- Main Menu -->
+    <div class="main-menu" id="mainMenu">
+        <div class="menu-title">SPACE SHOOTER</div>
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="showLevelMenu()">PLAY</button>
+            <button class="menu-btn" onclick="showInstructions()">INSTRUCTIONS</button>
+            <button class="menu-btn" onclick="showCredits()">CREDITS</button>
+        </div>
+    </div>
+
+    <!-- Level Menu -->
+    <div class="level-menu" id="levelMenu">
+        <div class="menu-title">SELECT LEVEL</div>
+        <div class="level-grid" id="levelGrid">
+            <!-- Level buttons will be generated by JavaScript -->
+        </div>
+        <button class="back-btn" onclick="showMainMenu()">BACK</button>
+    </div>
+
+    <!-- Info Modal -->
+    <div class="info-modal" id="infoModal">
+        <h2 id="modalTitle">INSTRUCTIONS</h2>
+        <div class="info-content" id="modalContent">
+            <!-- Content will be filled by JavaScript -->
+        </div>
+        <button class="close-btn" onclick="closeInfoModal()">CLOSE</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="game-container" id="gameContainer" style="display: none;">
+        <div id="gameCanvas"></div>
+        
+        <div class="ui-overlay">
+            <div class="game-header">
+                <div class="brand">FATEH GAMES</div>
+            </div>
+            
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="info-label">SCORE</span>
+                    <span class="info-value" id="score">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">LIVES</span>
+                    <span class="info-value" id="lives">3</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ENEMIES</span>
+                    <span class="info-value" id="enemies">10</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">MISSILES</span>
+                    <span class="info-value" id="missiles">3</span>
+                </div>
+            </div>
+            
+            <div class="crosshair"></div>
+            
+            <div class="controls-info">
+                <h3>CONTROLS</h3>
+                <div class="control-item">
+                    <span class="key">↑ ↓ ← →</span>
+                    <span>Move Spaceship</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">SPACE</span>
+                    <span>Fire Bullets</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">M</span>
+                    <span>Launch Missile</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">R</span>
+                    <span>Restart Game</span>
+                </div>
+            </div>
+            
+            <!-- Mobile Arrow Controls -->
+            <div class="mobile-arrows">
+                <div class="arrow-row">
+                    <div class="arrow-btn" id="arrowUp">↑</div>
+                </div>
+                <div class="arrow-row">
+                    <div class="arrow-btn" id="arrowLeft">←</div>
+                    <div class="arrow-btn" id="arrowDown">↓</div>
+                    <div class="arrow-btn" id="arrowRight">→</div>
+                </div>
+            </div>
+            
+            <div class="on-screen-controls">
+                <div class="action-btn shoot">FIRE<br>BULLET</div>
+                <div class="action-btn missile">LAUNCH<br>MISSILE</div>
+            </div>
+            
+            <div class="game-over" id="gameOver">
+                <h2>GAME OVER</h2>
+                <p>Your final score: <span id="finalScore">0</span></p>
+                <button class="restart-btn" onclick="restartGame()">PLAY AGAIN</button>
+                <button class="main-menu-btn" onclick="backToMainMenu()">MAIN MENU</button>
+            </div>
+            
+            <div class="level-complete" id="levelComplete">
+                <h2>LEVEL COMPLETE!</h2>
+                <p>Your score: <span id="completeScore">0</span></p>
+                <button class="next-level-btn" onclick="nextLevel()">NEXT LEVEL</button>
+                <button class="main-menu-btn" onclick="backToMainMenu()">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Game variables
+        let scene, camera, renderer, player, enemies = [];
+        let bullets = [], enemyBullets = [], missiles = [], explosions = [];
+        let score = 0, lives = 3, enemyCount = 10, missilesLeft = 3;
+        let gameOver = false, levelComplete = false;
+        let keys = {};
+        let currentLevel = 1;
+        let completedLevels = JSON.parse(localStorage.getItem('completedLevels')) || [];
+        
+        // DOM elements
+        const splashScreen = document.getElementById('splashScreen');
+        const mainMenu = document.getElementById('mainMenu');
+        const levelMenu = document.getElementById('levelMenu');
+        const gameContainer = document.getElementById('gameContainer');
+        const levelGrid = document.getElementById('levelGrid');
+        const loadingBar = document.getElementById('loadingBar');
+        const loadingText = document.getElementById('loadingText');
+        const infoModal = document.getElementById('infoModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        
+        const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
+        const enemiesElement = document.getElementById('enemies');
+        const missilesElement = document.getElementById('missiles');
+        const gameOverScreen = document.getElementById('gameOver');
+        const levelCompleteScreen = document.getElementById('levelComplete');
+        const finalScoreElement = document.getElementById('finalScore');
+        const completeScoreElement = document.getElementById('completeScore');
+        
+        // On-screen control elements
+        const shootBtn = document.querySelector('.action-btn.shoot');
+        const missileBtn = document.querySelector('.action-btn.missile');
+        
+        // Mobile arrow elements
+        const arrowUp = document.getElementById('arrowUp');
+        const arrowDown = document.getElementById('arrowDown');
+        const arrowLeft = document.getElementById('arrowLeft');
+        const arrowRight = document.getElementById('arrowRight');
+        
+        // Initialize the game
+        function initGame() {
+            // Show splash screen first
+            showSplashScreen();
+        }
+        
+        // Splash screen with loading
+        function showSplashScreen() {
+            splashScreen.style.display = 'flex';
+            mainMenu.style.display = 'none';
+            levelMenu.style.display = 'none';
+            gameContainer.style.display = 'none';
+            infoModal.style.display = 'none';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 2;
+                loadingBar.style.width = progress + '%';
+                loadingText.textContent = `Loading... ${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        showMainMenu();
+                    }, 500);
+                }
+            }, 50);
+        }
+        
+        // Show main menu
+        function showMainMenu() {
+            splashScreen.style.display = 'none';
+            mainMenu.style.display = 'flex';
+            levelMenu.style.display = 'none';
+            gameContainer.style.display = 'none';
+            infoModal.style.display = 'none';
+        }
+        
+        // Show level menu
+        function showLevelMenu() {
+            splashScreen.style.display = 'none';
+            mainMenu.style.display = 'none';
+            levelMenu.style.display = 'flex';
+            gameContainer.style.display = 'none';
+            infoModal.style.display = 'none';
+            
+            // Generate level buttons for 12 levels
+            levelGrid.innerHTML = '';
+            for (let i = 1; i <= 12; i++) {
+                const levelBtn = document.createElement('button');
+                levelBtn.className = 'level-btn';
+                levelBtn.textContent = i;
+                
+                // Check if level is completed, current, or locked
+                if (completedLevels.includes(i)) {
+                    levelBtn.classList.add('completed');
+                } else if (i === currentLevel) {
+                    levelBtn.classList.add('current');
+                } else if (i > 1 && !completedLevels.includes(i-1) && i !== currentLevel) {
+                    levelBtn.classList.add('locked');
+                }
+                
+                // Add click event for all levels (including completed and current)
+                levelBtn.addEventListener('click', function() {
+                    if (!levelBtn.classList.contains('locked')) {
+                        startLevel(i);
+                    }
+                });
+                
+                levelGrid.appendChild(levelBtn);
+            }
+        }
+        
+        // Show instructions in modal
+        function showInstructions() {
+            modalTitle.textContent = 'INSTRUCTIONS';
+            modalContent.innerHTML = `
+                <p><span class="highlight">CONTROLS:</span></p>
+                <p>↑ ↓ ← → - Move Spaceship</p>
+                <p>SPACE - Fire Bullets</p>
+                <p>M - Launch Missile</p>
+                <p>R - Restart Game</p>
+                <br>
+                <p><span class="highlight">GAME OBJECTIVE:</span></p>
+                <p>Destroy all enemy spaceships to complete each level</p>
+                <p>Each level increases in difficulty with more enemies</p>
+                <p>Complete all 12 levels to win the game!</p>
+                <br>
+                <p><span class="highlight">TIPS:</span></p>
+                <p>• Use missiles for difficult enemies</p>
+                <p>• Avoid enemy bullets and collisions</p>
+                <p>• Collect power-ups when available</p>
+            `;
+            infoModal.style.display = 'flex';
+        }
+        
+        // Show credits in modal
+        function showCredits() {
+            modalTitle.textContent = 'CREDITS';
+            modalContent.innerHTML = `
+                <p><span class="highlight">FATEH GAMES PRESENTS</span></p>
+                <br>
+                <p><span class="highlight">3D SPACE SHOOTER</span></p>
+                <br>
+                <p>Created with Three.js</p>
+                <p>Game Development by Fateh Games</p>
+                <br>
+                <p><span class="highlight">SPECIAL THANKS:</span></p>
+                <p>Three.js Community</p>
+                <p>WebGL Developers</p>
+                <p>All Beta Testers</p>
+                <br>
+                <p><span class="highlight">© 2024 FATEH GAMES</span></p>
+                <p>All Rights Reserved</p>
+            `;
+            infoModal.style.display = 'flex';
+        }
+        
+        // Close info modal
+        function closeInfoModal() {
+            infoModal.style.display = 'none';
+        }
+        
+        // Start a specific level
+        function startLevel(level) {
+            console.log("Starting level:", level);
+            currentLevel = level;
+            splashScreen.style.display = 'none';
+            mainMenu.style.display = 'none';
+            levelMenu.style.display = 'none';
+            gameContainer.style.display = 'block';
+            infoModal.style.display = 'none';
+            
+            // Initialize Three.js scene
+            initThreeJS();
+        }
+        
+        // Back to main menu from game
+        function backToMainMenu() {
+            // Clear the game
+            if (scene) {
+                while(scene.children.length > 0) { 
+                    scene.remove(scene.children[0]); 
+                }
+            }
+            
+            bullets = [];
+            enemyBullets = [];
+            missiles = [];
+            explosions = [];
+            
+            showMainMenu();
+        }
+        
+        // Initialize Three.js scene
+        function initThreeJS() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000011);
+            scene.fog = new THREE.Fog(0x000011, 10, 100);
+            
+            // Create camera - FIXED POSITION (behind player)
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 15); // Fixed position behind player
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('gameCanvas').innerHTML = '';
+            document.getElementById('gameCanvas').appendChild(renderer.domElement);
+            
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // Create stars
+            createStars();
+            
+            // Create player
+            createPlayer();
+            
+            // Create enemies based on level
+            createEnemies();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Set up controls
+            setupControls();
+            
+            // Reset game state
+            score = 0;
+            lives = 3;
+            missilesLeft = 3 + currentLevel;
+            gameOver = false;
+            levelComplete = false;
+            
+            // Update UI
+            scoreElement.textContent = score;
+            livesElement.textContent = lives;
+            missilesElement.textContent = missilesLeft;
+            gameOverScreen.style.display = 'none';
+            levelCompleteScreen.style.display = 'none';
+            
+            // Start game loop
+            animate();
+        }
+        
+        // Create starfield background
+        function createStars() {
+            const starGeometry = new THREE.BufferGeometry();
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.1,
+                transparent: true
+            });
+            
+            const starVertices = [];
+            for (let i = 0; i < 10000; i++) {
+                const x = (Math.random() - 0.5) * 2000;
+                const y = (Math.random() - 0.5) * 2000;
+                const z = (Math.random() - 0.5) * 2000;
+                starVertices.push(x, y, z);
+            }
+            
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+        }
+        
+        // Create player spaceship - STRAIGHT FIGHTER JET (ROTATED 90 DEGREES)
+        function createPlayer() {
+            const group = new THREE.Group();
+            
+            // Main fuselage (long and straight)
+            const fuselageGeometry = new THREE.CylinderGeometry(0.3, 0.2, 3, 8);
+            const fuselageMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x00a8ff,
+                shininess: 100
+            });
+            const fuselage = new THREE.Mesh(fuselageGeometry, fuselageMaterial);
+            fuselage.rotation.x = Math.PI / 2; // Rotate 90 degrees to face forward
+            group.add(fuselage);
+            
+            // Cockpit
+            const cockpitGeometry = new THREE.SphereGeometry(0.4, 8, 8);
+            const cockpitMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x0088cc,
+                shininess: 100
+            });
+            const cockpit = new THREE.Mesh(cockpitGeometry, cockpitMaterial);
+            cockpit.position.z = 0.8; // Adjusted for new rotation
+            group.add(cockpit);
+            
+            // Wings
+            const wingGeometry = new THREE.BoxGeometry(3, 0.1, 1);
+            const wingMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x0066aa,
+                shininess: 100
+            });
+            const wings = new THREE.Mesh(wingGeometry, wingMaterial);
+            wings.position.y = -0.1;
+            wings.rotation.x = Math.PI / 2; // Adjust wings for new rotation
+            group.add(wings);
+            
+            // Engine glow
+            const engineGlow = new THREE.PointLight(0x00ffea, 2, 8);
+            engineGlow.position.set(0, 0, -1.2); // Adjusted for new rotation
+            group.add(engineGlow);
+            
+            // Engine exhaust
+            const exhaustGeometry = new THREE.ConeGeometry(0.3, 0.8, 8);
+            const exhaustMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffaa00,
+                transparent: true,
+                opacity: 0.7
+            });
+            const exhaust = new THREE.Mesh(exhaustGeometry, exhaustMaterial);
+            exhaust.position.set(0, 0, -1.6); // Adjusted for new rotation
+            exhaust.rotation.x = -Math.PI / 2; // Adjust exhaust for new rotation
+            group.add(exhaust);
+            
+            player = group;
+            player.position.set(0, 0, 0);
+            player.castShadow = true;
+            scene.add(player);
+        }
+        
+        // Create enemies - STRAIGHT FIGHTER JETS (ROTATED 90 DEGREES)
+        function createEnemies() {
+            enemies = [];
+            // Increase enemy count with each level
+            const enemiesToCreate = 10 + (currentLevel - 1) * 5;
+            
+            for (let i = 0; i < enemiesToCreate; i++) {
+                const group = new THREE.Group();
+                
+                // Main fuselage
+                const fuselageGeometry = new THREE.CylinderGeometry(0.25, 0.15, 2.5, 8);
+                const fuselageMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xff4444,
+                    shininess: 100
+                });
+                const fuselage = new THREE.Mesh(fuselageGeometry, fuselageMaterial);
+                fuselage.rotation.x = Math.PI / 2; // Rotate 90 degrees to face forward
+                group.add(fuselage);
+                
+                // Cockpit
+                const cockpitGeometry = new THREE.SphereGeometry(0.3, 8, 8);
+                const cockpitMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xcc3333,
+                    shininess: 100
+                });
+                const cockpit = new THREE.Mesh(cockpitGeometry, cockpitMaterial);
+                cockpit.position.z = 0.6; // Adjusted for new rotation
+                group.add(cockpit);
+                
+                // Wings
+                const wingGeometry = new THREE.BoxGeometry(2.5, 0.1, 0.8);
+                const wingMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xaa2222,
+                    shininess: 100
+                });
+                const wings = new THREE.Mesh(wingGeometry, wingMaterial);
+                wings.position.y = -0.1;
+                wings.rotation.x = Math.PI / 2; // Adjust wings for new rotation
+                group.add(wings);
+                
+                // Engine glow
+                const enemyGlow = new THREE.PointLight(0xff6666, 1, 6);
+                enemyGlow.position.set(0, 0, -1.0); // Adjusted for new rotation
+                group.add(enemyGlow);
+                
+                // Position enemies in front of player
+                const row = Math.floor(i / 5);
+                const col = i % 5;
+                group.position.set(
+                    (col - 2) * 3,
+                    0,
+                    -15 - row * 3
+                );
+                
+                // Rotate enemy to face player (180 degrees + 90 degrees for proper orientation)
+                group.rotation.y = Math.PI;
+                
+                group.castShadow = true;
+                scene.add(group);
+                
+                // Add enemy properties - increase speed with each level
+                group.userData = {
+                    health: 1,
+                    speed: Math.random() * 0.02 + 0.01 + (currentLevel * 0.005),
+                    shootCooldown: Math.floor(Math.random() * 100) + 50 - (currentLevel * 5),
+                    shootFrequency: Math.floor(Math.random() * 100) + 100 - (currentLevel * 5)
+                };
+                
+                enemies.push(group);
+            }
+            
+            // Update enemy count display
+            enemyCount = enemiesToCreate;
+            enemiesElement.textContent = enemyCount;
+        }
+        
+        // Create bullet
+        function createBullet(position, direction, isPlayerBullet = true) {
+            const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: isPlayerBullet ? 0x00ffea : 0xff6666
+            });
+            
+            const bullet = new THREE.Mesh(geometry, material);
+            bullet.position.copy(position);
+            scene.add(bullet);
+            
+            bullet.userData = {
+                direction: direction.clone(),
+                speed: 0.5,
+                isPlayerBullet: isPlayerBullet
+            };
+            
+            if (isPlayerBullet) {
+                bullets.push(bullet);
+            } else {
+                enemyBullets.push(bullet);
+            }
+        }
+        
+        // Create missile
+        function createMissile(position) {
+            const geometry = new THREE.CylinderGeometry(0.05, 0.1, 0.8, 8);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0xffff00,
+                shininess: 100
+            });
+            
+            const missile = new THREE.Mesh(geometry, material);
+            missile.position.copy(position);
+            scene.add(missile);
+            
+            // Add missile glow
+            const missileGlow = new THREE.PointLight(0xffaa00, 2, 5);
+            missile.add(missileGlow);
+            
+            missile.userData = {
+                target: null,
+                speed: 0.3
+            };
+            
+            missiles.push(missile);
+            missilesLeft--;
+            missilesElement.textContent = missilesLeft;
+        }
+        
+        // Create explosion
+        function createExplosion(position) {
+            const particleCount = 20;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const velocities = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                // Position
+                positions[i * 3] = position.x;
+                positions[i * 3 + 1] = position.y;
+                positions[i * 3 + 2] = position.z;
+                
+                // Color (yellow to red)
+                colors[i * 3] = Math.random() * 0.5 + 0.5; // R
+                colors[i * 3 + 1] = Math.random() * 0.5;   // G
+                colors[i * 3 + 2] = 0;                     // B
+                
+                // Velocity
+                velocities.push({
+                    x: (Math.random() - 0.5) * 0.2,
+                    y: (Math.random() - 0.5) * 0.2,
+                    z: (Math.random() - 0.5) * 0.2
+                });
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 1
+            });
+            
+            const explosion = new THREE.Points(geometry, material);
+            scene.add(explosion);
+            
+            explosion.userData = {
+                velocities: velocities,
+                life: 1.0
+            };
+            
+            explosions.push(explosion);
+        }
+        
+        // Set up controls
+        function setupControls() {
+            // Keyboard controls
+            window.addEventListener('keydown', (e) => {
+                // Arrow keys for movement
+                if (e.key === 'ArrowUp') keys['arrowup'] = true;
+                if (e.key === 'ArrowDown') keys['arrowdown'] = true;
+                if (e.key === 'ArrowLeft') keys['arrowleft'] = true;
+                if (e.key === 'ArrowRight') keys['arrowright'] = true;
+                
+                // Other controls
+                if (e.key === ' ' && !gameOver && !levelComplete) {
+                    shootBullet();
+                }
+                if ((e.key === 'm' || e.key === 'M') && !gameOver && !levelComplete && missilesLeft > 0) {
+                    shootMissile();
+                }
+                if ((e.key === 'r' || e.key === 'R') && (gameOver || levelComplete)) {
+                    restartGame();
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                // Arrow keys for movement
+                if (e.key === 'ArrowUp') keys['arrowup'] = false;
+                if (e.key === 'ArrowDown') keys['arrowdown'] = false;
+                if (e.key === 'ArrowLeft') keys['arrowleft'] = false;
+                if (e.key === 'ArrowRight') keys['arrowright'] = false;
+            });
+            
+            // On-screen controls
+            shootBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!gameOver && !levelComplete) {
+                    shootBullet();
+                }
+            });
+            
+            missileBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!gameOver && !levelComplete && missilesLeft > 0) {
+                    shootMissile();
+                }
+            });
+            
+            // Mouse controls for desktop
+            shootBtn.addEventListener('mousedown', () => {
+                if (!gameOver && !levelComplete) {
+                    shootBullet();
+                }
+            });
+            
+            missileBtn.addEventListener('mousedown', () => {
+                if (!gameOver && !levelComplete && missilesLeft > 0) {
+                    shootMissile();
+                }
+            });
+            
+            // Mobile arrow controls
+            arrowUp.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys['arrowup'] = true;
+            });
+            
+            arrowUp.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys['arrowup'] = false;
+            });
+            
+            arrowDown.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys['arrowdown'] = true;
+            });
+            
+            arrowDown.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys['arrowdown'] = false;
+            });
+            
+            arrowLeft.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys['arrowleft'] = true;
+            });
+            
+            arrowLeft.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys['arrowleft'] = false;
+            });
+            
+            arrowRight.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys['arrowright'] = true;
+            });
+            
+            arrowRight.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys['arrowright'] = false;
+            });
+            
+            // Mouse events for arrows (for testing on desktop)
+            arrowUp.addEventListener('mousedown', () => keys['arrowup'] = true);
+            arrowUp.addEventListener('mouseup', () => keys['arrowup'] = false);
+            arrowDown.addEventListener('mousedown', () => keys['arrowdown'] = true);
+            arrowDown.addEventListener('mouseup', () => keys['arrowdown'] = false);
+            arrowLeft.addEventListener('mousedown', () => keys['arrowleft'] = true);
+            arrowLeft.addEventListener('mouseup', () => keys['arrowleft'] = false);
+            arrowRight.addEventListener('mousedown', () => keys['arrowright'] = true);
+            arrowRight.addEventListener('mouseup', () => keys['arrowright'] = false);
+        }
+        
+        // Shoot bullet
+        function shootBullet() {
+            // Player shoots forward (now along Z-axis)
+            const bulletDirection = new THREE.Vector3(0, 0, -1);
+            createBullet(player.position.clone(), bulletDirection, true);
+        }
+        
+        // Shoot missile
+        function shootMissile() {
+            createMissile(player.position.clone());
+        }
+        
+        // Enemy shooting
+        function enemyShoot(enemy) {
+            // Enemy shoots toward player (now along Z-axis)
+            const direction = new THREE.Vector3(0, 0, 1);
+            createBullet(enemy.position.clone(), direction, false);
+        }
+        
+        // Update game state
+        function update() {
+            if (gameOver || levelComplete) return;
+            
+            // Player movement with arrow keys
+            const playerSpeed = 0.1;
+            if (keys['arrowup']) player.position.z -= playerSpeed;
+            if (keys['arrowdown']) player.position.z += playerSpeed;
+            if (keys['arrowleft']) player.position.x -= playerSpeed;
+            if (keys['arrowright']) player.position.x += playerSpeed;
+            
+            // Keep player in bounds
+            player.position.x = Math.max(-8, Math.min(8, player.position.x));
+            player.position.z = Math.max(-5, Math.min(5, player.position.z));
+            
+            // Update camera to follow player (but stay fixed in position)
+            camera.position.x = player.position.x;
+            camera.position.z = player.position.z + 15; // Always stay behind player
+            camera.lookAt(player.position.x, player.position.y, player.position.z - 10);
+            
+            // Update enemies
+            enemies.forEach((enemy, index) => {
+                // Move enemies toward player
+                enemy.position.z += enemy.userData.speed;
+                
+                // Enemy shooting
+                if (enemy.userData.shootCooldown > 0) {
+                    enemy.userData.shootCooldown--;
+                } else if (Math.random() < 0.01) {
+                    enemyShoot(enemy);
+                    enemy.userData.shootCooldown = enemy.userData.shootFrequency;
+                }
+                
+                // Remove enemies that go too far
+                if (enemy.position.z > 10) {
+                    scene.remove(enemy);
+                    enemies.splice(index, 1);
+                    enemyCount--;
+                    enemiesElement.textContent = enemyCount;
+                }
+            });
+            
+            // Update bullets
+            updateBullets(bullets);
+            updateBullets(enemyBullets);
+            
+            // Update missiles
+            missiles.forEach((missile, index) => {
+                if (missile.userData.target && missile.userData.target.parent) {
+                    // Move toward target
+                    const direction = new THREE.Vector3();
+                    direction.subVectors(missile.userData.target.position, missile.position).normalize();
+                    missile.position.add(direction.multiplyScalar(missile.userData.speed));
+                    
+                    // Rotate missile toward target
+                    missile.lookAt(missile.userData.target.position);
+                } else {
+                    // Find new target
+                    let closestEnemy = null;
+                    let closestDistance = Infinity;
+                    
+                    enemies.forEach(enemy => {
+                        const distance = missile.position.distanceTo(enemy.position);
+                        if (distance < closestDistance) {
+                            closestDistance = distance;
+                            closestEnemy = enemy;
+                        }
+                    });
+                    
+                    missile.userData.target = closestEnemy;
+                }
+                
+                // Remove missiles that go too far
+                if (missile.position.z < -50) {
+                    scene.remove(missile);
+                    missiles.splice(index, 1);
+                }
+            });
+            
+            // Update explosions
+            explosions.forEach((explosion, index) => {
+                const positions = explosion.geometry.attributes.position.array;
+                const velocities = explosion.userData.velocities;
+                
+                for (let i = 0; i < velocities.length; i++) {
+                    positions[i * 3] += velocities[i].x;
+                    positions[i * 3 + 1] += velocities[i].y;
+                    positions[i * 3 + 2] += velocities[i].z;
+                }
+                
+                explosion.geometry.attributes.position.needsUpdate = true;
+                explosion.userData.life -= 0.02;
+                
+                if (explosion.userData.life <= 0) {
+                    scene.remove(explosion);
+                    explosions.splice(index, 1);
+                }
+            });
+            
+            // Check collisions
+            checkCollisions();
+            
+            // Check win condition
+            if (enemyCount <= 0) {
+                levelComplete = true;
+                completeScoreElement.textContent = score;
+                levelCompleteScreen.style.display = 'block';
+                
+                // Mark level as completed
+                if (!completedLevels.includes(currentLevel)) {
+                    completedLevels.push(currentLevel);
+                    localStorage.setItem('completedLevels', JSON.stringify(completedLevels));
+                }
+            }
+        }
+        
+        // Update bullets
+        function updateBullets(bulletArray) {
+            bulletArray.forEach((bullet, index) => {
+                bullet.position.add(bullet.userData.direction.clone().multiplyScalar(bullet.userData.speed));
+                
+                // Remove bullets that go too far
+                if (bullet.position.z < -50 || bullet.position.z > 50) {
+                    scene.remove(bullet);
+                    bulletArray.splice(index, 1);
+                }
+            });
+        }
+        
+        // Check collisions
+        function checkCollisions() {
+            // Player bullets vs enemies
+            bullets.forEach((bullet, bulletIndex) => {
+                enemies.forEach((enemy, enemyIndex) => {
+                    if (bullet.position.distanceTo(enemy.position) < 1) {
+                        // Hit!
+                        createExplosion(enemy.position.clone());
+                        scene.remove(bullet);
+                        scene.remove(enemy);
+                        bullets.splice(bulletIndex, 1);
+                        enemies.splice(enemyIndex, 1);
+                        enemyCount--;
+                        score += 10;
+                        scoreElement.textContent = score;
+                        enemiesElement.textContent = enemyCount;
+                    }
+                });
+            });
+            
+            // Missiles vs enemies
+            missiles.forEach((missile, missileIndex) => {
+                enemies.forEach((enemy, enemyIndex) => {
+                    if (missile.position.distanceTo(enemy.position) < 1) {
+                        // Hit!
+                        createExplosion(enemy.position.clone());
+                        scene.remove(missile);
+                        scene.remove(enemy);
+                        missiles.splice(missileIndex, 1);
+                        enemies.splice(enemyIndex, 1);
+                        enemyCount--;
+                        score += 20;
+                        scoreElement.textContent = score;
+                        enemiesElement.textContent = enemyCount;
+                    }
+                });
+            });
+            
+            // Enemy bullets vs player
+            enemyBullets.forEach((bullet, bulletIndex) => {
+                if (bullet.position.distanceTo(player.position) < 1) {
+                    // Hit!
+                    createExplosion(player.position.clone());
+                    scene.remove(bullet);
+                    enemyBullets.splice(bulletIndex, 1);
+                    lives--;
+                    livesElement.textContent = lives;
+                    
+                    if (lives <= 0) {
+                        gameOver = true;
+                        finalScoreElement.textContent = score;
+                        gameOverScreen.style.display = 'block';
+                    }
+                }
+            });
+            
+            // Enemies vs player
+            enemies.forEach((enemy, enemyIndex) => {
+                if (enemy.position.distanceTo(player.position) < 1.5) {
+                    // Collision!
+                    createExplosion(player.position.clone());
+                    scene.remove(enemy);
+                    enemies.splice(enemyIndex, 1);
+                    enemyCount--;
+                    lives--;
+                    livesElement.textContent = lives;
+                    enemiesElement.textContent = enemyCount;
+                    
+                    if (lives <= 0) {
+                        gameOver = true;
+                        finalScoreElement.textContent = score;
+                        gameOverScreen.style.display = 'block';
+                    }
+                }
+            });
+        }
+        
+        // Next level function
+        function nextLevel() {
+            if (currentLevel < 12) {
+                currentLevel++;
+                
+                // Clear scene
+                while(scene.children.length > 0) { 
+                    scene.remove(scene.children[0]); 
+                }
+                
+                // Reset game state but keep score
+                bullets = [];
+                enemyBullets = [];
+                missiles = [];
+                explosions = [];
+                lives = 3;
+                missilesLeft = 3 + currentLevel; // Give more missiles with each level
+                
+                gameOver = false;
+                levelComplete = false;
+                
+                // Update UI
+                livesElement.textContent = lives;
+                missilesElement.textContent = missilesLeft;
+                levelCompleteScreen.style.display = 'none';
+                
+                // Reinitialize game with increased difficulty
+                createStars();
+                createPlayer();
+                createEnemies();
+                
+                // Reset lighting
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(10, 10, 5);
+                directionalLight.castShadow = true;
+                scene.add(directionalLight);
+            } else {
+                // Game completed
+                alert('Congratulations! You have completed all 12 levels!');
+                backToMainMenu();
+            }
+        }
+        
+        // Restart game
+        function restartGame() {
+            // Clear scene
+            while(scene.children.length > 0) { 
+                scene.remove(scene.children[0]); 
+            }
+            
+            // Reset game state
+            bullets = [];
+            enemyBullets = [];
+            missiles = [];
+            explosions = [];
+            score = 0;
+            lives = 3;
+            missilesLeft = 3 + currentLevel;
+            gameOver = false;
+            levelComplete = false;
+            
+            // Update UI
+            scoreElement.textContent = score;
+            livesElement.textContent = lives;
+            missilesElement.textContent = missilesLeft;
+            gameOverScreen.style.display = 'none';
+            levelCompleteScreen.style.display = 'none';
+            
+            // Reinitialize game
+            createStars();
+            createPlayer();
+            createEnemies();
+            
+            // Reset lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+            renderer.render(scene, camera);
+        }
+        
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
